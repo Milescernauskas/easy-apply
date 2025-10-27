@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // Hashed password
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs      Job[]
+  resumes   Resume[]
+  coverLetters CoverLetter[]
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Job details (already included - company, title, description)
+  title       String
+  company     String
+  description String   @db.Text
+  url         String?
+
+  analysis    Json?    // Stores extracted skills, keywords, requirements
+
+  // Application results - saved when user completes optimization
+  baseResumeContent           String?  @db.Text
+  optimizedResumeContent      String?  @db.Text
+  optimizedCoverLetterContent String?  @db.Text
+  baseAtsScore                Json?
+  optimizedAtsScore           Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  resumes     Resume[]
+  coverLetters CoverLetter[]
+
+  @@index([userId])
+}
+
+model Resume {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId       String?
+  job         Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  name        String   // e.g., "Software Engineer at Google - v1"
+  content     String   @db.Text
+  originalContent String? @db.Text // Store original if this is an optimized version
+
+  isOriginal  Boolean  @default(false) // True if this is the user's base resume
+  atsScore    Float?   // ATS optimization score
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions    ResumeVersion[]
+
+  @@index([userId])
+  @@index([jobId])
+}
+
+model ResumeVersion {
+  id        String   @id @default(cuid())
+  resumeId  String
+  resume    Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  version   Int
+  content   String   @db.Text
+  atsScore  Float?
+  changes   Json?    // Track what was changed
+
+  createdAt DateTime @default(now())
+
+  @@index([resumeId])
+}
+
+model CoverLetter {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId       String?
+  job         Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  name        String   // e.g., "Google Software Engineer - v2"
+  content     String   @db.Text
+  originalContent String? @db.Text // Store original if this is an optimized version
+
+  isOriginal  Boolean  @default(false) // True if this is the user's base cover letter
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions    CoverLetterVersion[]
+
+  @@index([userId])
+  @@index([jobId])
+}
+
+model CoverLetterVersion {
+  id             String       @id @default(cuid())
+  coverLetterId  String
+  coverLetter    CoverLetter  @relation(fields: [coverLetterId], references: [id], onDelete: Cascade)
+
+  version        Int
+  content        String       @db.Text
+  changes        Json?        // Track what was changed
+
+  createdAt      DateTime     @default(now())
+
+  @@index([coverLetterId])
+}
