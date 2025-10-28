@@ -160,11 +160,11 @@ ${jobDescription}
 Key Skills Required: ${jobAnalysis.keySkills.join(', ')}
 Company Values: ${jobAnalysis.companyValues.join(', ')}
 
-Your task is to substantially rewrite the cover letter to align with this specific role while maintaining the author's authentic voice:
+Your task is to rewrite the cover letter to align with this specific role while maintaining the author's authentic voice:
 
 1. **Preserve the author's voice**: Match the writing style, tone, sentence structure, and personality from the original letter. If they use contractions, you use contractions. If they're formal, stay formal. If they're conversational, stay conversational.
 
-2. **Aggressively tailor the content**: Rewrite the body paragraphs to directly address this specific job:
+2. **Tailor the content**: Rewrite the body paragraphs to directly address this specific job:
    - Lead with the most relevant experiences from the resume that match the job requirements
    - Weave in 4-6 of the key skills naturally throughout the letter
    - Reference 2-3 company values and explain why they resonate with you
