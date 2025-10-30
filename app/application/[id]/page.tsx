@@ -36,6 +36,7 @@ export default function ApplicationPage() {
   const [editableCoverLetterContent, setEditableCoverLetterContent] = useState('');
   const [isSavingCoverLetter, setIsSavingCoverLetter] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [excludedKeywords, setExcludedKeywords] = useState<string[]>([]);
 
   useEffect(() => {
     loadJob();
@@ -56,6 +57,7 @@ export default function ApplicationPage() {
       setJob(data.job);
       setEditableResumeContent(data.job.optimizedResumeContent || '');
       setEditableCoverLetterContent(data.job.optimizedCoverLetterContent || '');
+      setExcludedKeywords(data.job.excludedKeywords || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load application');
     } finally {
@@ -163,6 +165,25 @@ export default function ApplicationPage() {
       alert('Failed to re-analyze resume. Please try again.');
     } finally {
       setIsReanalyzing(false);
+    }
+  };
+
+  const handleRemoveKeyword = async (keyword: string) => {
+    if (!job) return;
+
+    const updatedExcludedKeywords = [...excludedKeywords, keyword];
+    setExcludedKeywords(updatedExcludedKeywords);
+
+    try {
+      await fetch(`/api/jobs/${job.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ excludedKeywords: updatedExcludedKeywords }),
+      });
+    } catch (error) {
+      console.error('Failed to update excluded keywords:', error);
+      // Revert on error
+      setExcludedKeywords(excludedKeywords);
     }
   };
 
@@ -280,7 +301,11 @@ export default function ApplicationPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold mb-3">Optimized Resume ATS Score</h3>
-                <ATSScoreCard score={job.optimizedAtsScore} />
+                <ATSScoreCard
+                  score={job.optimizedAtsScore}
+                  excludedKeywords={excludedKeywords}
+                  onRemoveKeyword={handleRemoveKeyword}
+                />
                 {job.optimizedAtsScore.overall > job.baseAtsScore.overall && (
                   <div className="mt-3 text-center">
                     <span className="text-green-600 dark:text-green-400 font-medium">

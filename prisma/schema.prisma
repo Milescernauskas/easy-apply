@@ -35,6 +35,7 @@ model Job {
   url         String?
 
   analysis    Json?    // Stores extracted skills, keywords, requirements
+  excludedKeywords String[] @default([]) // Keywords user has manually removed from ATS scoring
 
   // Application results - saved when user completes optimization
   baseResumeContent           String?  @db.Text

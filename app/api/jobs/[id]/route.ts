@@ -29,6 +29,7 @@ export async function GET(
         description: true,
         url: true,
         analysis: true,
+        excludedKeywords: true,
         baseResumeContent: true,
         optimizedResumeContent: true,
         optimizedCoverLetterContent: true,

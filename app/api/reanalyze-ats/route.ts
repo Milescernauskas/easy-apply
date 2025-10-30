@@ -22,8 +22,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Calculate new ATS score
-    const newAtsScore = calculateATSScore(optimizedResumeContent, jobAnalysis, jobDescription);
+    // Get excluded keywords from database if jobId is provided
+    let excludedKeywords: string[] = [];
+    if (jobId) {
+      const job = await prisma.job.findUnique({
+        where: {
+          id: jobId,
+          userId: user.id,
+        },
+        select: {
+          excludedKeywords: true,
+        },
+      });
+      excludedKeywords = job?.excludedKeywords || [];
+    }
+
+    // Calculate new ATS score with excluded keywords
+    const newAtsScore = calculateATSScore(optimizedResumeContent, jobAnalysis, excludedKeywords);
 
     // If jobId is provided, update the database
     if (jobId) {
