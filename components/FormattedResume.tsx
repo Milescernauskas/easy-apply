@@ -151,8 +151,25 @@ export default function FormattedResume({ content, printable = false }: Formatte
 
       // Parse experience
       if (currentSection === 'experience') {
+        // Check for Personal Project format - flexible to handle various separators and formats
+        // Matches: "Personal Project — Easy Apply (Next.js) 2025"
+        //          "Personal Project - Easy Apply (Next.js) - 2025"
+        //          "Personal Project - Easy Apply (Next.js) 2025"
+        //          etc.
+        const personalProjectMatch = line.match(/^Personal Project\s*[—–-]?\s*(.+?)\s+(\d{4}(?:\s*[—–-]\s*(?:\d{4}|Present|present|Current|current))?)$/i);
+        if (personalProjectMatch) {
+          if (currentExp) {
+            result.experience.push(currentExp);
+          }
+          currentExp = {
+            title: `Personal Project - ${personalProjectMatch[1].trim()}`,
+            company: '', // No company for personal projects
+            duration: personalProjectMatch[2].trim(),
+            bullets: [],
+          };
+        }
         // Check if it's a line with dates (company/duration line)
-        if (line.match(/\d{4}/)) {
+        else if (line.match(/\d{4}/)) {
           // If we already have a title but no company, this is the company/date line
           if (currentExp && !currentExp.company) {
             // Extract date range (e.g., "2022 - 2025" or "2022-2025")
@@ -307,9 +324,9 @@ export default function FormattedResume({ content, printable = false }: Formatte
     : 'bg-green-100 text-green-800';
 
   return (
-    <div className="bg-white text-gray-900 shadow-lg max-w-[8.5in] mx-auto print:shadow-none print:max-w-none relative">
+    <div className="bg-white text-gray-900 shadow-lg max-w-[8.3in] mx-auto print:shadow-none print:max-w-none relative">
       {/* Page Break Indicator */}
-      <div className="absolute left-0 right-0 h-0 border-t-2 border-dashed border-red-500 print:hidden" style={{ top: '11in' }}>
+      <div className="absolute left-0 right-0 h-0 border-t-2 border-dashed border-red-500 print:hidden" style={{ top: '10.8in' }}>
         <span className="absolute -top-3 right-4 bg-red-500 text-white text-xs px-2 py-0.5 rounded">
           Page Break
         </span>
@@ -328,9 +345,14 @@ export default function FormattedResume({ content, printable = false }: Formatte
               </h2>
             )}
             {resume.summary && (
-              <p className="text-sm text-gray-700 leading-snug">
-                {resume.summary}
-              </p>
+              <div>
+                <h2 className="text-xs font-bold text-gray-900 mb-1 uppercase tracking-wide">
+                  Professional Summary
+                </h2>
+                <p className="text-sm text-gray-700 leading-snug">
+                  {resume.summary}
+                </p>
+              </div>
             )}
           </div>
 
@@ -344,15 +366,28 @@ export default function FormattedResume({ content, printable = false }: Formatte
                 {resume.experience.map((exp, idx) => (
                   <div key={idx}>
                     <div className="mb-1">
-                      <h3 className="font-bold text-base text-gray-900">{exp.title}</h3>
-                      <div className="flex justify-between items-baseline">
-                        <p className="text-sm text-gray-700">
-                          {exp.company}
-                        </p>
-                        {exp.duration && (
-                          <span className="text-sm text-gray-600 ml-4 flex-shrink-0">{exp.duration}</span>
-                        )}
-                      </div>
+                      {exp.company ? (
+                        // Regular work experience with company
+                        <>
+                          <h3 className="font-bold text-base text-gray-900">{exp.title}</h3>
+                          <div className="flex justify-between items-baseline">
+                            <p className="text-sm text-gray-700">
+                              {exp.company}
+                            </p>
+                            {exp.duration && (
+                              <span className="text-sm text-gray-600 ml-4 flex-shrink-0">{exp.duration}</span>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        // Personal project without company
+                        <div className="flex justify-between items-baseline">
+                          <h3 className="font-bold text-base text-gray-900">{exp.title}</h3>
+                          {exp.duration && (
+                            <span className="text-sm text-gray-600 ml-4 flex-shrink-0">{exp.duration}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     {exp.bullets.length > 0 && (
                       <ul className="mt-2 space-y-1">
