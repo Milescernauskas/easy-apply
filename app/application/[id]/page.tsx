@@ -187,6 +187,28 @@ export default function ApplicationPage() {
     }
   };
 
+  const handleDuplicate = async () => {
+    if (!job) return;
+
+    try {
+      const response = await fetch(`/api/jobs/${job.id}/duplicate`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to duplicate application');
+      }
+
+      const { job: duplicatedJob } = await response.json();
+
+      // Redirect to the duplicated application
+      router.push(`/application/${duplicatedJob.id}`);
+    } catch (error) {
+      console.error('Duplicate failed:', error);
+      alert('Failed to duplicate application. Please try again.');
+    }
+  };
+
   const handlePrintResume = (printable: boolean = false) => {
     // Open new window with just the resume
     const resumeId = printable ? 'printable-resume' : 'formatted-resume';
@@ -266,6 +288,12 @@ export default function ApplicationPage() {
             </p>
           </div>
           <div className="flex gap-3">
+            <button
+              onClick={handleDuplicate}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
+            >
+              Duplicate
+            </button>
             <button
               onClick={handlePrintPDF}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"

@@ -72,6 +72,26 @@ export default function Dashboard() {
     }
   };
 
+  const handleDuplicate = async (jobId: string) => {
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/duplicate`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to duplicate application');
+      }
+
+      const { job } = await response.json();
+
+      // Redirect to the duplicated application
+      router.push(`/application/${job.id}`);
+    } catch (error) {
+      console.error('Duplicate failed:', error);
+      setError('Failed to duplicate application. Please try again.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -154,12 +174,20 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <Link
-                  href={`/application/${job.id}`}
-                  className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
-                >
-                  View Full Application
-                </Link>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/application/${job.id}`}
+                    className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                  >
+                    View Full Application
+                  </Link>
+                  <button
+                    onClick={() => handleDuplicate(job.id)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm rounded-lg transition-colors"
+                  >
+                    Duplicate
+                  </button>
+                </div>
               </div>
             ))}
           </div>
