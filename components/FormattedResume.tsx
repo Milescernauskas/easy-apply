@@ -346,9 +346,6 @@ export default function FormattedResume({ content, printable = false }: Formatte
             )}
             {resume.summary && (
               <div>
-                <h2 className="text-xs font-bold text-gray-900 mb-1 uppercase tracking-wide">
-                  Professional Summary
-                </h2>
                 <p className="text-sm text-gray-700 leading-snug">
                   {resume.summary}
                 </p>
