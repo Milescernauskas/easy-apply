@@ -257,6 +257,32 @@ export default function ApplicationPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!job) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${job.title}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/jobs/${job.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete application');
+      }
+
+      // Redirect to dashboard after successful deletion
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Delete failed:', error);
+      alert('Failed to delete application. Please try again.');
+    }
+  };
+
   const handlePrintResume = (printable: boolean = false) => {
     // Open new window with just the resume
     const resumeId = printable ? 'printable-resume' : 'formatted-resume';
@@ -379,6 +405,12 @@ export default function ApplicationPage() {
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
             >
               Print to PDF
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm rounded-lg transition-colors"
+            >
+              Delete
             </button>
             <Link
               href="/dashboard"

@@ -106,3 +106,51 @@ export async function PATCH(
     );
   }
 }
+
+// Delete a job application
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
+
+    const { id } = await params;
+
+    // Verify the job belongs to the user
+    const existingJob = await prisma.job.findUnique({
+      where: {
+        id,
+        userId: user.id,
+      },
+    });
+
+    if (!existingJob) {
+      return NextResponse.json(
+        { error: 'Job not found' },
+        { status: 404 }
+      );
+    }
+
+    // Delete the job
+    await prisma.job.delete({
+      where: {
+        id,
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Delete job error:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete job' },
+      { status: 500 }
+    );
+  }
+}

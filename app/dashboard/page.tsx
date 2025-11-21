@@ -142,6 +142,30 @@ export default function Dashboard() {
     }
   };
 
+  const handleDelete = async (jobId: string, jobTitle: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${jobTitle}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete application');
+      }
+
+      // Remove the job from the list
+      setJobs(jobs.filter(job => job.id !== jobId));
+    } catch (error) {
+      console.error('Delete failed:', error);
+      setError('Failed to delete application. Please try again.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -268,6 +292,12 @@ export default function Dashboard() {
                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm rounded-lg transition-colors"
                   >
                     Duplicate
+                  </button>
+                  <button
+                    onClick={() => handleDelete(job.id, job.title)}
+                    className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm rounded-lg transition-colors"
+                  >
+                    Delete
                   </button>
                 </div>
               </div>
