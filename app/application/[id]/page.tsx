@@ -37,6 +37,8 @@ export default function ApplicationPage() {
   const [isSavingCoverLetter, setIsSavingCoverLetter] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [excludedKeywords, setExcludedKeywords] = useState<string[]>([]);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitle, setEditingTitle] = useState('');
 
   useEffect(() => {
     loadJob();
@@ -209,6 +211,52 @@ export default function ApplicationPage() {
     }
   };
 
+  const startEditingTitle = () => {
+    if (!job) return;
+    setIsEditingTitle(true);
+    setEditingTitle(job.title);
+  };
+
+  const cancelEditingTitle = () => {
+    setIsEditingTitle(false);
+    setEditingTitle('');
+  };
+
+  const saveTitle = async () => {
+    if (!job || !editingTitle.trim()) {
+      cancelEditingTitle();
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/jobs/${job.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editingTitle.trim() }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update title');
+      }
+
+      // Update the job state with the new title
+      setJob({ ...job, title: editingTitle.trim() });
+      cancelEditingTitle();
+    } catch (error) {
+      console.error('Update title failed:', error);
+      alert('Failed to update application title. Please try again.');
+      cancelEditingTitle();
+    }
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      saveTitle();
+    } else if (e.key === 'Escape') {
+      cancelEditingTitle();
+    }
+  };
+
   const handlePrintResume = (printable: boolean = false) => {
     // Open new window with just the resume
     const resumeId = printable ? 'printable-resume' : 'formatted-resume';
@@ -280,8 +328,40 @@ export default function ApplicationPage() {
     <div className="min-h-screen p-8 sm:p-12 pb-20">
       <main className="w-[80%] max-w-7xl mx-auto">
         <div className="mb-12 flex items-center justify-between no-print">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{job.title}</h1>
+          <div className="flex-1">
+            {isEditingTitle ? (
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="text"
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  onKeyDown={handleTitleKeyDown}
+                  onBlur={saveTitle}
+                  autoFocus
+                  className="text-3xl font-bold border-b-2 border-blue-500 bg-transparent focus:outline-none flex-1 dark:text-white"
+                />
+                <button
+                  onClick={cancelEditingTitle}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  title="Cancel (Esc)"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mb-2">
+                <h1 className="text-3xl font-bold">{job.title}</h1>
+                <button
+                  onClick={startEditingTitle}
+                  className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  title="Rename"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              </div>
+            )}
             <p className="text-xl text-gray-600 dark:text-gray-400">{job.company}</p>
             <p className="text-sm text-gray-500 mt-2">
               Saved on {new Date(job.createdAt).toLocaleDateString()}

@@ -32,6 +32,8 @@ export default function Dashboard() {
   const [jobs, setJobs] = useState<SavedJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   useEffect(() => {
     checkAuthAndLoadJobs();
@@ -89,6 +91,54 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Duplicate failed:', error);
       setError('Failed to duplicate application. Please try again.');
+    }
+  };
+
+  const startEditing = (job: SavedJob) => {
+    setEditingJobId(job.id);
+    setEditingTitle(job.title);
+  };
+
+  const cancelEditing = () => {
+    setEditingJobId(null);
+    setEditingTitle('');
+  };
+
+  const saveTitle = async (jobId: string) => {
+    if (!editingTitle.trim()) {
+      cancelEditing();
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editingTitle.trim() }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update title');
+      }
+
+      // Update the jobs list with the new title
+      setJobs(jobs.map(job =>
+        job.id === jobId ? { ...job, title: editingTitle.trim() } : job
+      ));
+
+      cancelEditing();
+    } catch (error) {
+      console.error('Update title failed:', error);
+      setError('Failed to update application title. Please try again.');
+      cancelEditing();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, jobId: string) => {
+    if (e.key === 'Enter') {
+      saveTitle(jobId);
+    } else if (e.key === 'Escape') {
+      cancelEditing();
     }
   };
 
@@ -154,7 +204,39 @@ export default function Dashboard() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h2 className="text-2xl font-bold mb-1">{job.title}</h2>
+                    {editingJobId === job.id ? (
+                      <div className="flex items-center gap-2 mb-1">
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, job.id)}
+                          onBlur={() => saveTitle(job.id)}
+                          autoFocus
+                          className="text-2xl font-bold border-b-2 border-blue-500 bg-transparent focus:outline-none flex-1"
+                        />
+                        <button
+                          onClick={cancelEditing}
+                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                          title="Cancel (Esc)"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 mb-1">
+                        <h2 className="text-2xl font-bold">{job.title}</h2>
+                        <button
+                          onClick={() => startEditing(job)}
+                          className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          title="Rename"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                     <p className="text-lg text-gray-600 dark:text-gray-400 mb-2">
                       {job.company}
                     </p>
